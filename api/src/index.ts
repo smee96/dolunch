@@ -7,7 +7,9 @@ import { roomRoutes } from './routes/rooms'
 import { applicationRoutes } from './routes/applications'
 import { settlementRoutes } from './routes/settlements'
 import { mediaRoutes } from './routes/media'
+import { adminRoutes } from './routes/admin'
 import { authMiddleware } from './middleware/auth'
+import { adminMiddleware } from './middleware/admin'
 
 export type Env = {
   DB: D1Database
@@ -24,7 +26,7 @@ export type Env = {
 }
 
 export type AppContext = {
-  Bindings: Env
+  Bindings: Env & { ADMIN_SECRET: string; TOSS_API_URL: string; TOSS_SECRET_KEY: string }
   Variables: {
     userId: string
     userHandle: string
@@ -51,5 +53,11 @@ api.route('/settlements', settlementRoutes)
 api.route('/media', mediaRoutes)
 
 app.route('/api', api)
+
+// 어드민 (별도 미들웨어)
+const admin = new Hono<AppContext>()
+admin.use('*', adminMiddleware)
+admin.route('/', adminRoutes)
+app.route('/admin', admin)
 
 export default app
