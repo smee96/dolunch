@@ -113,3 +113,18 @@ export function won(n: number | undefined | null) {
   if (n == null) return '—'
   return n.toLocaleString('ko-KR') + '원'
 }
+
+export function kst(iso: string | undefined | null, opts?: Intl.DateTimeFormatOptions) {
+  if (!iso) return '—'
+  return new Date(iso).toLocaleString('ko-KR', {
+    timeZone: 'Asia/Seoul',
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit',
+    ...opts,
+  })
+}
+
+export function kstDate(iso: string | undefined | null) {
+  if (!iso) return '—'
+  return new Date(iso).toLocaleDateString('ko-KR', { timeZone: 'Asia/Seoul', year: 'numeric', month: '2-digit', day: '2-digit' })
+}

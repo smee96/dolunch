@@ -4,43 +4,34 @@ import { nanoid } from '../utils/jwt'
 
 export const reelRoutes = new Hono<AppContext>()
 
-// 숏츠 피드 (팔로잉 + 둘러보기)
+// 숏츠 피드 (팔로잉 + 둘러보기 + 특정 호스트)
 reelRoutes.get('/feed', async (c) => {
   const userId = c.get('userId')
-  const { type = 'explore', limit = '20', offset = '0' } = c.req.query()
+  const { type = 'explore', limit = '20', offset = '0', host_id } = c.req.query()
+
+  const base = `
+    SELECT re.*, u.name as host_name, u.handle as host_handle,
+           u.avatar_url as host_avatar, u.follower_count as host_followers,
+           ro.id as room_id, ro.title as room_title, ro.meet_at as room_meet_at,
+           ro.capacity - ro.joined_count as room_spots, ro.deposit_amount, ro.status as room_status
+    FROM reels re
+    JOIN users u ON re.host_id = u.id
+    LEFT JOIN rooms ro ON re.id = ro.reel_id AND ro.status = 'open'
+  `
 
   let query: string
-  if (type === 'following') {
-    query = `
-      SELECT re.*, u.name as host_name, u.handle as host_handle,
-             u.avatar_url as host_avatar, u.follower_count as host_followers,
-             ro.id as room_id, ro.title as room_title, ro.meet_at as room_meet_at,
-             ro.capacity - ro.joined_count as room_spots, ro.deposit_amount, ro.status as room_status
-      FROM reels re
-      JOIN users u ON re.host_id = u.id
-      LEFT JOIN rooms ro ON re.id = ro.reel_id AND ro.status = 'open'
-      WHERE re.is_active = 1 AND re.host_id IN (
-        SELECT followee_id FROM follows WHERE follower_id = ?
-      )
-      ORDER BY re.created_at DESC LIMIT ? OFFSET ?
-    `
-  } else {
-    query = `
-      SELECT re.*, u.name as host_name, u.handle as host_handle,
-             u.avatar_url as host_avatar, u.follower_count as host_followers,
-             ro.id as room_id, ro.title as room_title, ro.meet_at as room_meet_at,
-             ro.capacity - ro.joined_count as room_spots, ro.deposit_amount, ro.status as room_status
-      FROM reels re
-      JOIN users u ON re.host_id = u.id
-      LEFT JOIN rooms ro ON re.id = ro.reel_id AND ro.status = 'open'
-      WHERE re.is_active = 1
-      ORDER BY re.created_at DESC LIMIT ? OFFSET ?
-    `
-  }
+  let params: unknown[]
 
-  const params = type === 'following'
-    ? [userId, Number(limit), Number(offset)]
-    : [Number(limit), Number(offset)]
+  if (host_id) {
+    query = base + `WHERE re.is_active = 1 AND re.host_id = ? ORDER BY re.created_at DESC LIMIT ? OFFSET ?`
+    params = [host_id, Number(limit), Number(offset)]
+  } else if (type === 'following') {
+    query = base + `WHERE re.is_active = 1 AND re.host_id IN (SELECT followee_id FROM follows WHERE follower_id = ?) ORDER BY re.created_at DESC LIMIT ? OFFSET ?`
+    params = [userId, Number(limit), Number(offset)]
+  } else {
+    query = base + `WHERE re.is_active = 1 ORDER BY re.created_at DESC LIMIT ? OFFSET ?`
+    params = [Number(limit), Number(offset)]
+  }
 
   const rows = await c.env.DB.prepare(query).bind(...params).all()
   return c.json({ reels: rows.results })

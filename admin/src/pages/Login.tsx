@@ -1,8 +1,10 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { adminLogin } from '../api/client'
 
 export default function Login() {
-  const [token, setToken] = useState('')
+  const [username, setUsername] = useState('')
+  const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const nav = useNavigate()
@@ -12,14 +14,11 @@ export default function Login() {
     setLoading(true)
     setError('')
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL ?? 'http://localhost:8787'}/admin/stats`, {
-        headers: { 'X-Admin-Token': token },
-      })
-      if (!res.ok) throw new Error('토큰이 올바르지 않습니다')
+      const token = await adminLogin(username, password)
       localStorage.setItem('admin_token', token)
       nav('/')
-    } catch (e: unknown) {
-      setError((e as Error).message)
+    } catch (err: unknown) {
+      setError((err as Error).message)
     } finally {
       setLoading(false)
     }
@@ -34,20 +33,35 @@ export default function Login() {
         </div>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wider">Admin Token</label>
+            <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wider">아이디</label>
             <input
-              type="password"
-              value={token}
-              onChange={(e) => setToken(e.target.value)}
-              placeholder="토큰을 입력하세요"
-              className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-rose-300 font-mono"
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="admin"
+              className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-rose-300"
               autoFocus
+              autoComplete="username"
             />
           </div>
-          {error && <p className="text-red-500 text-xs font-semibold">{error}</p>}
-          <button type="submit" disabled={!token || loading}
-            className="w-full py-3 rounded-xl bg-gradient-to-r from-orange-400 via-rose-500 to-rose-600 text-white font-bold text-sm disabled:opacity-50 transition-opacity">
-            {loading ? '확인 중...' : '로그인'}
+          <div>
+            <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wider">비밀번호</label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
+              className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-rose-300"
+              autoComplete="current-password"
+            />
+          </div>
+          {error && <p className="text-red-500 text-xs font-semibold bg-red-50 rounded-lg px-3 py-2">{error}</p>}
+          <button
+            type="submit"
+            disabled={!username || !password || loading}
+            className="w-full py-3 rounded-xl bg-gradient-to-r from-orange-400 via-rose-500 to-rose-600 text-white font-bold text-sm disabled:opacity-50 transition-opacity mt-2"
+          >
+            {loading ? '로그인 중...' : '로그인'}
           </button>
         </form>
       </div>

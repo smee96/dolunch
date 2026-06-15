@@ -10,7 +10,7 @@
     {
       "binding": "DB",
       "database_name": "dolunch-db",
-      "database_id": "PLACEHOLDER_REPLACE_AFTER_CREATE"
+      "database_id": "b11cee1f-b367-411e-ac5c-157df440d58f"
     }
   ],
   "r2_buckets": [
@@ -22,15 +22,14 @@
   "kv_namespaces": [
     {
       "binding": "SESSION",
-      "id": "PLACEHOLDER_REPLACE_AFTER_CREATE"
+      "id": "4312e6fb5bc34044a25bf1184a15d10b"
     }
   ],
   "vars": {
-    "ENVIRONMENT": "development",
+    "ENVIRONMENT": "production",
     "TOSS_API_URL": "https://api.tosspayments.com",
     "DEPOSIT_RATIO": "0.20",
     "PLATFORM_FEE_RATIO": "0.30",
     "WITHHOLDING_TAX_RATE": "0.033"
-  },
-  "secrets": ["TOSS_SECRET_KEY", "JWT_SECRET", "KAKAO_CLIENT_ID", "ADMIN_SECRET"]
+  }
 }

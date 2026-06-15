@@ -36,6 +36,28 @@ applicationRoutes.post('/rooms/:roomId/apply', async (c) => {
   }, 201)
 })
 
+// 목 결제 확인 (실제 PG 연동 전 개발/테스트용)
+applicationRoutes.post('/applications/:id/deposit/mock', async (c) => {
+  const appId = c.req.param('id')
+  const app = await c.env.DB.prepare('SELECT * FROM applications WHERE id = ?')
+    .bind(appId).first<{ id: string; deposit_amount: number; room_id: string; deposit_payment_key: string | null }>()
+  if (!app) return c.json({ error: 'Not found' }, 404)
+  if (app.deposit_payment_key) return c.json({ error: 'Already paid' }, 400)
+
+  const mockKey = `mock_${nanoid()}`
+  await c.env.DB.batch([
+    c.env.DB.prepare(`
+      UPDATE applications SET deposit_payment_key = ?, deposit_paid_at = datetime('now'), updated_at = datetime('now')
+      WHERE id = ?
+    `).bind(mockKey, appId),
+    c.env.DB.prepare(`
+      INSERT INTO payment_logs (id, payment_key, order_id, type, amount, status, raw_json)
+      VALUES (?, ?, ?, 'deposit', ?, 'DONE', ?)
+    `).bind(nanoid(), mockKey, `mock_order_${appId}`, app.deposit_amount, JSON.stringify({ mock: true })),
+  ])
+  return c.json({ ok: true, paymentKey: mockKey })
+})
+
 // Toss 보증금 결제 성공 콜백
 applicationRoutes.post('/applications/:id/deposit/confirm', async (c) => {
   const { paymentKey, orderId, amount } = await c.req.json<{ paymentKey: string; orderId: string; amount: number }>()
@@ -77,6 +99,19 @@ applicationRoutes.post('/applications/:id/deposit/confirm', async (c) => {
   return c.json({ ok: true })
 })
 
+// 내가 지원한 목록 (게스트 뷰)
+applicationRoutes.get('/mine', async (c) => {
+  const userId = c.get('userId')
+  const rows = await c.env.DB.prepare(`
+    SELECT a.id, a.room_id, a.status, a.deposit_amount, a.deposit_payment_key,
+           r.title AS room_title, r.place_name, r.meet_at
+    FROM applications a JOIN rooms r ON a.room_id = r.id
+    WHERE a.guest_id = ?
+    ORDER BY a.created_at DESC
+  `).bind(userId).all()
+  return c.json({ applications: rows.results })
+})
+
 // 호스트가 지원자 목록 조회
 applicationRoutes.get('/rooms/:roomId/applicants', async (c) => {
   const userId = c.get('userId')
@@ -97,8 +132,9 @@ applicationRoutes.get('/rooms/:roomId/applicants', async (c) => {
 // 호스트 수락/거절
 applicationRoutes.patch('/applications/:id/decide', async (c) => {
   const userId = c.get('userId')
-  const { decision } = await c.req.json<{ decision: 'accepted' | 'rejected' }>()
-  if (!['accepted', 'rejected'].includes(decision)) return c.json({ error: 'Invalid decision' }, 400)
+  const body = await c.req.json<{ decision?: 'accepted' | 'rejected'; action?: 'accept' | 'reject' }>()
+  const decision = body.decision ?? (body.action === 'accept' ? 'accepted' : body.action === 'reject' ? 'rejected' : undefined)
+  if (!decision || !['accepted', 'rejected'].includes(decision)) return c.json({ error: 'Invalid decision' }, 400)
 
   const app = await c.env.DB.prepare(`
     SELECT a.*, r.host_id, r.capacity, r.joined_count, r.deposit_amount

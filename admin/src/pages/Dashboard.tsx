@@ -12,7 +12,7 @@ export default function Dashboard() {
   const s = stats!
   return (
     <div>
-      <PageHeader title="대시보드" sub={`마지막 갱신 ${new Date().toLocaleTimeString('ko-KR')}`} />
+      <PageHeader title="대시보드" sub={`마지막 갱신 ${new Date().toLocaleTimeString('ko-KR', { timeZone: 'Asia/Seoul' })}`} />
 
       {/* 핵심 지표 */}
       <div className="px-8 grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api, type AdminUser } from '../api/client'
-import { PageHeader, Table, Tr, Td, Badge, Btn, Input, Modal, Loading, won } from '../components/ui'
+import { PageHeader, Table, Tr, Td, Badge, Btn, Input, Modal, Loading, won, kst } from '../components/ui'
 
 function userBadge(u: AdminUser) {
   if (u.is_business) return <Badge label="사업자" color="blue" />
@@ -51,7 +51,7 @@ export default function Users() {
                   <Td><span className="font-bold">{u.hosting_count}</span>회</Td>
                   <Td>⭐ {u.rating.toFixed(1)}</Td>
                   <Td>{won(u.total_spent)}</Td>
-                  <Td><span className="text-xs text-gray-400">{u.created_at.slice(0, 10)}</span></Td>
+                  <Td><span className="text-xs text-gray-400">{kst(u.created_at, { hour: undefined, minute: undefined })}</span></Td>
                   <Td>
                     <Btn size="sm" variant="ghost" onClick={(e?: React.MouseEvent) => { e?.stopPropagation(); setSelected(u) }}>상세</Btn>
                   </Td>

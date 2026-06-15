@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api, type Room } from '../api/client'
-import { PageHeader, Table, Tr, Td, Badge, Btn, Input, Modal, Loading, won } from '../components/ui'
+import { PageHeader, Table, Tr, Td, Badge, Btn, Input, Modal, Loading, won, kst } from '../components/ui'
 
 const STATUS_LABEL: Record<string, { label: string; color: 'green' | 'yellow' | 'red' | 'gray' | 'blue' }> = {
   open: { label: '모집중', color: 'green' },
@@ -55,9 +55,7 @@ export default function Rooms() {
                       <div className="text-xs text-gray-400">{r.place_name}</div>
                     </Td>
                     <Td><span className="text-xs font-mono">{r.host_handle ?? r.host_name}</span></Td>
-                    <Td>
-                      <div className="text-xs font-mono">{r.meet_at.slice(0, 16).replace('T', ' ')}</div>
-                    </Td>
+                    <Td><div className="text-xs">{kst(r.meet_at)}</div></Td>
                     <Td>
                       <div className="text-sm">
                         <span className="font-bold">{r.joined_count}</span>

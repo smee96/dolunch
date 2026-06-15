@@ -4,12 +4,26 @@ function getToken() {
   return localStorage.getItem('admin_token') ?? ''
 }
 
+export async function adminLogin(username: string, password: string): Promise<string> {
+  const res = await fetch(`${BASE}/admin/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, password }),
+  })
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({})) as { error?: string }
+    throw new Error(err.error ?? '로그인에 실패했습니다.')
+  }
+  const { token } = await res.json() as { token: string }
+  return token
+}
+
 async function req<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${BASE}${path}`, {
     ...init,
     headers: {
       'Content-Type': 'application/json',
-      'X-Admin-Token': getToken(),
+      'Authorization': `Bearer ${getToken()}`,
       ...init?.headers,
     },
   })

@@ -6,16 +6,32 @@ export const roomRoutes = new Hono<AppContext>()
 
 // 방 목록 (피드용 — 공개)
 roomRoutes.get('/', async (c) => {
-  const { status = 'open', limit = '20', offset = '0' } = c.req.query()
-  const rows = await c.env.DB.prepare(`
-    SELECT r.*, u.name as host_name, u.handle as host_handle, u.avatar_url as host_avatar,
-           u.rating as host_rating, u.follower_count as host_followers
-    FROM rooms r
-    JOIN users u ON r.host_id = u.id
-    WHERE r.status = ?
-    ORDER BY r.meet_at ASC
-    LIMIT ? OFFSET ?
-  `).bind(status, Number(limit), Number(offset)).all()
+  const { status = 'open', limit = '20', offset = '0', host_id } = c.req.query()
+
+  let query: string
+  let params: unknown[]
+
+  if (host_id) {
+    query = `
+      SELECT r.*, u.name as host_name, u.handle as host_handle, u.avatar_url as host_avatar,
+             u.rating as host_rating, u.follower_count as host_followers
+      FROM rooms r JOIN users u ON r.host_id = u.id
+      WHERE r.host_id = ?
+      ORDER BY r.created_at DESC LIMIT ? OFFSET ?
+    `
+    params = [host_id, Number(limit), Number(offset)]
+  } else {
+    query = `
+      SELECT r.*, u.name as host_name, u.handle as host_handle, u.avatar_url as host_avatar,
+             u.rating as host_rating, u.follower_count as host_followers
+      FROM rooms r JOIN users u ON r.host_id = u.id
+      WHERE r.status = ?
+      ORDER BY r.meet_at ASC LIMIT ? OFFSET ?
+    `
+    params = [status, Number(limit), Number(offset)]
+  }
+
+  const rows = await c.env.DB.prepare(query).bind(...params).all()
   return c.json({ rooms: rows.results })
 })
 

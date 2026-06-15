@@ -75,6 +75,24 @@ authRoutes.post('/phone/verify', async (c) => {
   return c.json({ token, user })
 })
 
+// 개발용 목 로그인 (테스트 계정 자동 생성 후 실제 JWT 발급)
+authRoutes.post('/dev-login', async (c) => {
+  const devId = 'dev_user_001'
+  const devHandle = '@dev_host'
+  const devName = '개발자'
+
+  let user = await c.env.DB.prepare('SELECT * FROM users WHERE id = ?').bind(devId).first<{ id: string; handle: string; name: string }>()
+  if (!user) {
+    await c.env.DB.prepare(
+      'INSERT INTO users (id, name, handle, bio) VALUES (?, ?, ?, ?)'
+    ).bind(devId, devName, devHandle, '테스트 계정입니다').run()
+    user = { id: devId, handle: devHandle, name: devName }
+  }
+
+  const token = await signJwt({ sub: user.id, handle: user.handle }, c.env.JWT_SECRET)
+  return c.json({ token, user })
+})
+
 // 내 프로필 조회
 authRoutes.get('/me', async (c) => {
   const token = c.req.header('Authorization')?.replace('Bearer ', '')

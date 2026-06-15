@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api, type Settlement } from '../api/client'
-import { PageHeader, Table, Tr, Td, Badge, Btn, Modal, Loading, won } from '../components/ui'
+import { PageHeader, Table, Tr, Td, Badge, Btn, Modal, Loading, won, kst } from '../components/ui'
 
 const ST: Record<string, { label: string; color: 'green' | 'yellow' | 'red' | 'gray' | 'blue' }> = {
   pending: { label: '영수증 대기', color: 'yellow' },
@@ -61,7 +61,7 @@ export default function Settlements() {
                   <Tr key={s.id} onClick={() => setSelected(s)}>
                     <Td>
                       <div className="font-bold text-sm text-gray-900">{s.room_title}</div>
-                      <div className="text-xs text-gray-400">{s.meet_at.slice(0, 10)} · {s.joined_count}명</div>
+                      <div className="text-xs text-gray-400">{kst(s.meet_at, { hour: undefined, minute: undefined })} · {s.joined_count}명</div>
                     </Td>
                     <Td>
                       <div className="text-sm font-semibold">{s.host_name}</div>

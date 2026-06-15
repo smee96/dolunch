@@ -7,9 +7,11 @@ import { roomRoutes } from './routes/rooms'
 import { applicationRoutes } from './routes/applications'
 import { settlementRoutes } from './routes/settlements'
 import { mediaRoutes } from './routes/media'
+import { userRoutes } from './routes/users'
 import { adminRoutes } from './routes/admin'
 import { authMiddleware } from './middleware/auth'
 import { adminMiddleware } from './middleware/admin'
+import { signJwt } from './utils/jwt'
 
 export type Env = {
   DB: D1Database
@@ -26,7 +28,7 @@ export type Env = {
 }
 
 export type AppContext = {
-  Bindings: Env & { ADMIN_SECRET: string; TOSS_API_URL: string; TOSS_SECRET_KEY: string }
+  Bindings: Env & { ADMIN_SECRET: string; ADMIN_USERNAME?: string; ADMIN_PASSWORD?: string; TOSS_API_URL: string; TOSS_SECRET_KEY: string }
   Variables: {
     userId: string
     userHandle: string
@@ -43,6 +45,18 @@ app.get('/health', (c) => c.json({ ok: true, env: c.env.ENVIRONMENT }))
 // 인증 불필요
 app.route('/auth', authRoutes)
 
+// 어드민 로그인 (공개)
+app.post('/admin/login', async (c) => {
+  const { username, password } = await c.req.json<{ username: string; password: string }>()
+  const validUser = c.env.ADMIN_USERNAME ?? 'admin'
+  const validPass = c.env.ADMIN_PASSWORD ?? c.env.ADMIN_SECRET
+  if (username !== validUser || password !== validPass) {
+    return c.json({ error: '아이디 또는 비밀번호가 올바르지 않습니다.' }, 401)
+  }
+  const token = await signJwt({ sub: 'admin', role: 'admin' }, c.env.JWT_SECRET, 60 * 60 * 24 * 7)
+  return c.json({ token })
+})
+
 // 인증 필요
 const api = new Hono<AppContext>()
 api.use('*', authMiddleware)
@@ -51,6 +65,7 @@ api.route('/rooms', roomRoutes)
 api.route('/applications', applicationRoutes)
 api.route('/settlements', settlementRoutes)
 api.route('/media', mediaRoutes)
+api.route('/users', userRoutes)
 
 app.route('/api', api)
 

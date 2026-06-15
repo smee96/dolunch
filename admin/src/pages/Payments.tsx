@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api, type PaymentLog } from '../api/client'
-import { PageHeader, Table, Tr, Td, Badge, Btn, Modal, Input, Loading, won } from '../components/ui'
+import { PageHeader, Table, Tr, Td, Badge, Btn, Modal, Input, Loading, won, kst } from '../components/ui'
 
 const TYPE_COLOR: Record<string, 'green' | 'yellow' | 'red' | 'gray' | 'blue'> = {
   deposit: 'yellow', main: 'green', refund: 'red', deduction: 'gray',
@@ -51,7 +51,7 @@ export default function Payments() {
             <Table heads={['결제 시각', '유형', '금액', 'Toss 상태', 'Payment Key', 'Order ID', '']}>
               {data?.payments.map((p) => (
                 <Tr key={p.id}>
-                  <Td><span className="text-xs text-gray-500 font-mono">{p.created_at.slice(0, 16).replace('T', ' ')}</span></Td>
+                  <Td><span className="text-xs text-gray-500">{kst(p.created_at)}</span></Td>
                   <Td><Badge label={TYPE_LABEL[p.type] ?? p.type} color={TYPE_COLOR[p.type] ?? 'gray'} /></Td>
                   <Td><span className={`font-bold ${p.type === 'refund' ? 'text-red-500' : 'text-gray-900'}`}>{won(p.amount)}</span></Td>
                   <Td><span className="text-xs font-mono text-gray-600">{p.status}</span></Td>
