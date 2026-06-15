@@ -1,0 +1,36 @@
+{
+  "name": "dolunch-api",
+  "main": "src/index.ts",
+  "compatibility_date": "2025-06-15",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": {
+    "enabled": true
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "dolunch-db",
+      "database_id": "PLACEHOLDER_REPLACE_AFTER_CREATE"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "MEDIA",
+      "bucket_name": "dolunch-media"
+    }
+  ],
+  "kv_namespaces": [
+    {
+      "binding": "SESSION",
+      "id": "PLACEHOLDER_REPLACE_AFTER_CREATE"
+    }
+  ],
+  "vars": {
+    "ENVIRONMENT": "development",
+    "TOSS_API_URL": "https://api.tosspayments.com",
+    "DEPOSIT_RATIO": "0.20",
+    "PLATFORM_FEE_RATIO": "0.30",
+    "WITHHOLDING_TAX_RATE": "0.033"
+  },
+  "secrets": ["TOSS_SECRET_KEY", "JWT_SECRET", "KAKAO_CLIENT_ID"]
+}
