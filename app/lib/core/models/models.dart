@@ -142,11 +142,13 @@ class UserProfile {
   final int hostingCount;
   final double rating;
   final bool isBusiness;
+  final bool isFollowing;
 
   const UserProfile({
     required this.id, required this.name, required this.handle,
     required this.bio, this.avatarUrl, required this.followerCount,
     required this.hostingCount, required this.rating, required this.isBusiness,
+    this.isFollowing = false,
   });
 
   factory UserProfile.fromJson(Map<String, dynamic> j) => UserProfile(
@@ -157,5 +159,6 @@ class UserProfile {
     hostingCount: j['hosting_count'] as int? ?? 0,
     rating: (j['rating'] as num?)?.toDouble() ?? 0.0,
     isBusiness: (j['is_business'] as int? ?? 0) == 1,
+    isFollowing: (j['is_following'] as bool?) ?? false,
   );
 }

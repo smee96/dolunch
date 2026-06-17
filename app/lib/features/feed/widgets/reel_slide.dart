@@ -3,6 +3,7 @@ import 'package:video_player/video_player.dart';
 import '../../../core/models/models.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../room/widgets/glam_gradient.dart';
+import '../../comment/screens/comment_screen.dart';
 
 class ReelSlide extends StatefulWidget {
   final Reel reel;
@@ -110,7 +111,11 @@ class _ReelSlideState extends State<ReelSlide> {
                 active: widget.liked, onTap: widget.onLike,
               ),
               const SizedBox(height: 20),
-              _RailBtn(icon: Icons.chat_bubble_outline, label: _formatCount(widget.reel.commentCount)),
+              _RailBtn(
+                icon: Icons.chat_bubble_outline,
+                label: _formatCount(widget.reel.commentCount),
+                onTap: () => showCommentSheet(context, widget.reel.id),
+              ),
               const SizedBox(height: 20),
               _RailBtn(icon: Icons.share_outlined, label: '공유'),
             ]),

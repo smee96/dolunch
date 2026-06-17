@@ -11,6 +11,8 @@ import '../../features/applicant/screens/applicants_screen.dart' as my_apps;
 import '../../features/profile/screens/profile_screen.dart';
 import '../../features/settlement/screens/settlement_screen.dart';
 import '../../features/upload/screens/upload_reel_screen.dart';
+import '../../features/search/screens/search_screen.dart';
+import '../../features/settings/screens/settings_screen.dart';
 import '../auth/auth_provider.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
@@ -44,6 +46,8 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/profile/:id', builder: (c, s) => ProfileScreen(userId: s.pathParameters['id'])),
       GoRoute(path: '/upload/reel', builder: (c, s) => const UploadReelScreen()),
       GoRoute(path: '/settlements', builder: (c, s) => const SettlementScreen()),
+      GoRoute(path: '/search', builder: (c, s) => const SearchScreen()),
+      GoRoute(path: '/settings', builder: (c, s) => const SettingsScreen()),
     ],
   );
 });

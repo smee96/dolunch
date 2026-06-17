@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../providers/feed_provider.dart';
 import '../widgets/reel_slide.dart';
 import '../widgets/deposit_sheet.dart';
@@ -72,23 +73,35 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
                   ),
           ),
 
-          // 상단 탭 (팔로잉 / 둘러보기)
+          // 상단 탭 (팔로잉 / 둘러보기) + 검색
           SafeArea(
-            child: Align(
-              alignment: Alignment.topCenter,
-              child: Padding(
-                padding: const EdgeInsets.only(top: 8),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
+            child: Padding(
+              padding: const EdgeInsets.only(top: 8, left: 16, right: 16),
+              child: Row(children: [
+                // 검색 버튼
+                GestureDetector(
+                  onTap: () => context.push('/search'),
+                  child: Container(
+                    width: 36, height: 36,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white.withValues(alpha: 0.15),
+                    ),
+                    child: const Icon(Icons.search, color: Colors.white, size: 20),
+                  ),
+                ),
+                // 탭
+                Expanded(
+                  child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
                     _TabBtn(label: '팔로잉', active: _tab == 'following',
                       onTap: () { setState(() => _tab = 'following'); ref.read(feedProvider.notifier).switchType('following'); }),
                     const SizedBox(width: 22),
                     _TabBtn(label: '둘러보기', active: _tab == 'explore',
                       onTap: () { setState(() => _tab = 'explore'); ref.read(feedProvider.notifier).switchType('explore'); }),
-                  ],
+                  ]),
                 ),
-              ),
+                const SizedBox(width: 36), // 균형
+              ]),
             ),
           ),
 

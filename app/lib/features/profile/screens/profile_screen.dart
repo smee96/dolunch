@@ -7,6 +7,7 @@ import '../../../core/models/models.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/format.dart';
 import '../../../core/auth/auth_provider.dart';
+import 'edit_profile_screen.dart';
 
 class ProfileScreen extends ConsumerWidget {
   final String? userId;
@@ -91,9 +92,9 @@ class _ProfileBodyState extends ConsumerState<_ProfileBody> with SingleTickerPro
                 _AvatarRing(url: p.avatarUrl, name: p.name),
                 const Spacer(),
                 if (!widget.isMe)
-                  _FollowButton(userId: p.id)
+                  _FollowButton(userId: p.id, initialFollowing: p.isFollowing)
                 else
-                  _EditButton(),
+                  _EditButton(profile: p),
               ]),
               const SizedBox(height: 12),
 
@@ -166,6 +167,12 @@ class _SettingsSheet extends StatelessWidget {
         Container(width: 36, height: 4, margin: const EdgeInsets.symmetric(vertical: 12),
             decoration: BoxDecoration(color: const Color(0xFFE0E0E0), borderRadius: BorderRadius.circular(2))),
         ListTile(
+          leading: const Icon(Icons.settings_outlined, color: AppColors.ink),
+          title: const Text('설정', style: TextStyle(fontWeight: FontWeight.w600)),
+          onTap: () { Navigator.pop(context); context.push('/settings'); },
+        ),
+        const Divider(height: 1),
+        ListTile(
           leading: const Icon(Icons.receipt_long_outlined, color: AppColors.ink),
           title: const Text('정산 내역', style: TextStyle(fontWeight: FontWeight.w600)),
           onTap: () { Navigator.pop(context); context.push('/settlements'); },
@@ -212,12 +219,13 @@ class _AvatarRing extends StatelessWidget {
 
 class _FollowButton extends ConsumerWidget {
   final String userId;
-  const _FollowButton({required this.userId});
+  final bool initialFollowing;
+  const _FollowButton({required this.userId, required this.initialFollowing});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isFollowing = ref.watch(followProvider((userId, false)));
-    final notifier = ref.read(followProvider((userId, false)).notifier);
+    final isFollowing = ref.watch(followProvider((userId, initialFollowing)));
+    final notifier = ref.read(followProvider((userId, initialFollowing)).notifier);
 
     return GestureDetector(
       onTap: notifier.toggle,
@@ -240,9 +248,15 @@ class _FollowButton extends ConsumerWidget {
 }
 
 class _EditButton extends StatelessWidget {
+  final UserProfile profile;
+  const _EditButton({required this.profile});
+
   @override
   Widget build(BuildContext context) => GestureDetector(
-    onTap: () {},
+    onTap: () => Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => EditProfileScreen(profile: profile)),
+    ),
     child: Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
       decoration: BoxDecoration(

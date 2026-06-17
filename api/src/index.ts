@@ -8,6 +8,8 @@ import { applicationRoutes } from './routes/applications'
 import { settlementRoutes } from './routes/settlements'
 import { mediaRoutes } from './routes/media'
 import { userRoutes } from './routes/users'
+import { commentRoutes } from './routes/comments'
+import { searchRoutes } from './routes/search'
 import { adminRoutes } from './routes/admin'
 import { authMiddleware } from './middleware/auth'
 import { adminMiddleware } from './middleware/admin'
@@ -66,6 +68,8 @@ api.route('/applications', applicationRoutes)
 api.route('/settlements', settlementRoutes)
 api.route('/media', mediaRoutes)
 api.route('/users', userRoutes)
+api.route('/search', searchRoutes)
+api.route('/', commentRoutes)
 
 app.route('/api', api)
 
