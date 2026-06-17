@@ -6,6 +6,7 @@ import '../../feed/providers/feed_provider.dart';
 import '../../../core/models/models.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/format.dart';
+import '../../../core/auth/auth_provider.dart';
 
 class ProfileScreen extends ConsumerWidget {
   final String? userId;
@@ -65,7 +66,10 @@ class _ProfileBodyState extends ConsumerState<_ProfileBody> with SingleTickerPro
                 ? null
                 : IconButton(icon: const Icon(Icons.arrow_back_ios_new, size: 20), onPressed: () => context.pop()),
             actions: widget.isMe ? [
-              IconButton(icon: const Icon(Icons.settings_outlined, size: 22), onPressed: () {}),
+              IconButton(
+                icon: const Icon(Icons.settings_outlined, size: 22),
+                onPressed: () => _showSettings(context),
+              ),
             ] : [],
             flexibleSpace: FlexibleSpaceBar(
               background: Stack(fit: StackFit.expand, children: [
@@ -138,6 +142,45 @@ class _ProfileBodyState extends ConsumerState<_ProfileBody> with SingleTickerPro
           ],
         ),
       ),
+    );
+  }
+
+  void _showSettings(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (_) => _SettingsSheet(ref: ref),
+    );
+  }
+}
+
+class _SettingsSheet extends StatelessWidget {
+  final WidgetRef ref;
+  const _SettingsSheet({required this.ref});
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Column(mainAxisSize: MainAxisSize.min, children: [
+        Container(width: 36, height: 4, margin: const EdgeInsets.symmetric(vertical: 12),
+            decoration: BoxDecoration(color: const Color(0xFFE0E0E0), borderRadius: BorderRadius.circular(2))),
+        ListTile(
+          leading: const Icon(Icons.receipt_long_outlined, color: AppColors.ink),
+          title: const Text('정산 내역', style: TextStyle(fontWeight: FontWeight.w600)),
+          onTap: () { Navigator.pop(context); context.push('/settlements'); },
+        ),
+        const Divider(height: 1),
+        ListTile(
+          leading: const Icon(Icons.logout, color: AppColors.danger),
+          title: const Text('로그아웃', style: TextStyle(color: AppColors.danger, fontWeight: FontWeight.w600)),
+          onTap: () async {
+            Navigator.pop(context);
+            await ref.read(authNotifierProvider).logout();
+          },
+        ),
+        const SizedBox(height: 8),
+      ]),
     );
   }
 }

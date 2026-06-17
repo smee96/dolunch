@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:go_router/go_router.dart';
 import 'package:dio/dio.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/constants/api.dart';
+import '../../../core/auth/auth_provider.dart';
 
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
@@ -158,12 +157,12 @@ class _AuthSheetState extends State<_AuthSheet> {
   }
 }
 
-class _ProviderList extends StatelessWidget {
+class _ProviderList extends ConsumerWidget {
   final VoidCallback onPhoneTap;
   const _ProviderList({required this.onPhoneTap});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Column(mainAxisSize: MainAxisSize.min, children: [
       // 핸들 바
       Center(child: Container(
@@ -184,7 +183,7 @@ class _ProviderList extends StatelessWidget {
         bg: const Color(0xFFFEE500),
         fg: const Color(0xFF391B1B),
         icon: _KakaoIcon(),
-        onTap: () => _loginKakao(context),
+        onTap: () => _mockLogin(context, ref),
       ),
       const SizedBox(height: 12),
 
@@ -194,7 +193,7 @@ class _ProviderList extends StatelessWidget {
         bg: const Color(0xFF03C75A),
         fg: Colors.white,
         icon: const _NaverIcon(),
-        onTap: () => _loginNaver(context),
+        onTap: () => _mockLogin(context, ref),
       ),
       const SizedBox(height: 12),
 
@@ -210,22 +209,13 @@ class _ProviderList extends StatelessWidget {
     ]);
   }
 
-  Future<void> _loginKakao(BuildContext context) async {
-    await _mockLogin(context);
-  }
-
-  Future<void> _loginNaver(BuildContext context) async {
-    await _mockLogin(context);
-  }
-
-  Future<void> _mockLogin(BuildContext context) async {
+  Future<void> _mockLogin(BuildContext context, WidgetRef ref) async {
     try {
       final dio = Dio(BaseOptions(baseUrl: ApiConstants.baseUrl));
       final res = await dio.post<Map<String, dynamic>>('/auth/dev-login');
       final token = res.data!['token'] as String;
-      const storage = FlutterSecureStorage();
-      await storage.write(key: 'auth_token', value: token);
-      if (context.mounted) { Navigator.pop(context); context.go('/feed'); }
+      await ref.read(authNotifierProvider).login(token);
+      if (context.mounted) Navigator.pop(context);
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -372,10 +362,9 @@ class _PhoneFlowState extends ConsumerState<_PhoneFlow> {
       final dio = Dio(BaseOptions(baseUrl: ApiConstants.baseUrl));
       final res = await dio.post<Map<String, dynamic>>('/auth/dev-login');
       final token = res.data!['token'] as String;
-      const storage = FlutterSecureStorage();
-      await storage.write(key: 'auth_token', value: token);
+      await ref.read(authNotifierProvider).login(token);
       setState(() => _loading = false);
-      if (mounted) { Navigator.pop(context); context.go('/feed'); }
+      if (mounted) Navigator.pop(context);
     } catch (e) {
       setState(() { _loading = false; _error = '로그인 실패. 다시 시도해 주세요.'; });
     }

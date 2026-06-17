@@ -4,16 +4,42 @@ import { nanoid } from '../utils/jwt'
 
 export const settlementRoutes = new Hono<AppContext>()
 
+const mySettlementsQuery = `
+  SELECT s.id, s.room_id, r.title as room_title,
+         s.gross_amount as total_amount,
+         (s.gross_amount - COALESCE(s.withholding_tax, 0)) as host_amount,
+         s.status, s.receipt_url,
+         s.created_at as requested_at, s.updated_at as paid_at
+  FROM settlements s JOIN rooms r ON s.room_id = r.id
+  WHERE s.host_id = ?
+  ORDER BY s.created_at DESC
+`
+
 // 정산 목록 (호스트)
 settlementRoutes.get('/', async (c) => {
   const userId = c.get('userId')
-  const rows = await c.env.DB.prepare(`
-    SELECT s.*, r.title as room_title, r.meet_at
-    FROM settlements s JOIN rooms r ON s.room_id = r.id
-    WHERE s.host_id = ?
-    ORDER BY s.created_at DESC
-  `).bind(userId).all()
+  const rows = await c.env.DB.prepare(mySettlementsQuery).bind(userId).all()
   return c.json({ settlements: rows.results })
+})
+
+// alias for Flutter client
+settlementRoutes.get('/mine', async (c) => {
+  const userId = c.get('userId')
+  const rows = await c.env.DB.prepare(mySettlementsQuery).bind(userId).all()
+  return c.json({ settlements: rows.results })
+})
+
+// 정산 요청
+settlementRoutes.post('/:id/request', async (c) => {
+  const userId = c.get('userId')
+  const settlementId = c.req.param('id')
+  const s = await c.env.DB.prepare('SELECT * FROM settlements WHERE id = ? AND host_id = ?')
+    .bind(settlementId, userId).first<{ id: string; status: string }>()
+  if (!s) return c.json({ error: 'Not found or forbidden' }, 404)
+  if (s.status !== 'pending') return c.json({ error: 'Already processed' }, 400)
+  await c.env.DB.prepare(`UPDATE settlements SET status = 'requested', updated_at = datetime('now') WHERE id = ?`)
+    .bind(settlementId).run()
+  return c.json({ ok: true })
 })
 
 // 영수증 업로드 + 정산 확정

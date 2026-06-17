@@ -8,6 +8,7 @@ import '../../../core/models/models.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/constants/api.dart';
 import '../../../core/utils/format.dart';
+import '../../../core/auth/auth_provider.dart';
 
 class RoomDetailScreen extends ConsumerWidget {
   final String roomId;
@@ -30,6 +31,9 @@ class _DetailBody extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final currentUserIdAsync = ref.watch(currentUserIdProvider);
+    final currentUserId = currentUserIdAsync.valueOrNull;
+    final isHost = currentUserId != null && currentUserId == room.hostId;
     final deposit = ApiConstants.calcDeposit(room.pricePerPerson);
 
     return Scaffold(
@@ -86,7 +90,9 @@ class _DetailBody extends ConsumerWidget {
         ],
       ),
 
-      bottomNavigationBar: _ActionBar(room: room, deposit: deposit),
+      bottomNavigationBar: isHost
+          ? _HostActionBar(room: room)
+          : _ActionBar(room: room, deposit: deposit),
     );
   }
 }
@@ -210,6 +216,67 @@ class _ApplicantsRow extends StatelessWidget {
       ]),
     ),
   );
+}
+
+// ─── 호스트 액션바 ────────────────────────────────────────────────────────────
+class _HostActionBar extends StatelessWidget {
+  final Room room;
+  const _HostActionBar({required this.room});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.fromLTRB(20, 12, 20, MediaQuery.of(context).padding.bottom + 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border(top: BorderSide(color: AppColors.line.withOpacity(0.6))),
+      ),
+      child: Row(children: [
+        Expanded(
+          child: SizedBox(
+            height: 54,
+            child: OutlinedButton.icon(
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.ink,
+                side: const BorderSide(color: AppColors.line, width: 1.5),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              ),
+              icon: const Icon(Icons.people_alt_outlined, size: 18),
+              label: Text('지원자 ${room.joinedCount}명',
+                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
+              onPressed: () => context.push('/rooms/${room.id}/applicants'),
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          flex: 2,
+          child: SizedBox(
+            height: 54,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: AppColors.glamGradient,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [BoxShadow(
+                  color: AppColors.primary.withOpacity(0.4), blurRadius: 16, offset: const Offset(0, 6),
+                )],
+              ),
+              child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.transparent, shadowColor: Colors.transparent,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                ),
+                icon: const Icon(Icons.manage_accounts_outlined, color: Colors.white, size: 18),
+                label: const Text('모임 관리',
+                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: Colors.white)),
+                onPressed: () => context.push('/rooms/${room.id}/applicants'),
+              ),
+            ),
+          ),
+        ),
+      ]),
+    );
+  }
 }
 
 class _ActionBar extends ConsumerWidget {

@@ -14,11 +14,16 @@ class RoomApplicantsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final applicantsAsync = ref.watch(applicantsProvider(roomId));
+    final roomAsync = ref.watch(roomDetailProvider(roomId));
+    final roomIsDone = roomAsync.valueOrNull?.status == 'done';
 
     return Scaffold(
       backgroundColor: AppColors.base,
       appBar: AppBar(
-        title: const Text('지원자', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppColors.ink)),
+        title: Text(
+          roomIsDone ? '출석 확인' : '지원자',
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppColors.ink),
+        ),
         backgroundColor: AppColors.base,
         leading: IconButton(icon: const Icon(Icons.arrow_back_ios_new, size: 20), onPressed: () => context.pop()),
       ),
@@ -37,21 +42,28 @@ class RoomApplicantsScreen extends ConsumerWidget {
 
           return RefreshIndicator(
             color: AppColors.primary,
-            onRefresh: () async => ref.invalidate(applicantsProvider(roomId)),
+            onRefresh: () async {
+              ref.invalidate(applicantsProvider(roomId));
+              ref.invalidate(roomDetailProvider(roomId));
+            },
             child: ListView(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
               children: [
+                if (roomIsDone && accepted.isNotEmpty) ...[
+                  const _AttendanceBanner(),
+                  const SizedBox(height: 8),
+                ],
                 if (pending.isNotEmpty) ...[
                   _SectionHeader(label: '대기중', count: pending.length, color: AppColors.accent),
-                  ...pending.map((a) => _ApplicantCard(applicant: a, roomId: roomId)),
+                  ...pending.map((a) => _ApplicantCard(applicant: a, roomId: roomId, roomIsDone: false)),
                 ],
                 if (accepted.isNotEmpty) ...[
                   _SectionHeader(label: '수락됨', count: accepted.length, color: AppColors.success),
-                  ...accepted.map((a) => _ApplicantCard(applicant: a, roomId: roomId)),
+                  ...accepted.map((a) => _ApplicantCard(applicant: a, roomId: roomId, roomIsDone: roomIsDone)),
                 ],
                 if (rejected.isNotEmpty) ...[
                   _SectionHeader(label: '거절됨', count: rejected.length, color: AppColors.sub),
-                  ...rejected.map((a) => _ApplicantCard(applicant: a, roomId: roomId)),
+                  ...rejected.map((a) => _ApplicantCard(applicant: a, roomId: roomId, roomIsDone: false)),
                 ],
               ],
             ),
@@ -60,6 +72,28 @@ class RoomApplicantsScreen extends ConsumerWidget {
       ),
     );
   }
+}
+
+class _AttendanceBanner extends StatelessWidget {
+  const _AttendanceBanner();
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+    decoration: BoxDecoration(
+      color: AppColors.primary.withOpacity(0.08),
+      borderRadius: BorderRadius.circular(12),
+      border: Border.all(color: AppColors.primary.withOpacity(0.25)),
+    ),
+    child: const Row(children: [
+      Icon(Icons.info_outline, size: 16, color: AppColors.primary),
+      SizedBox(width: 8),
+      Expanded(child: Text(
+        '모임이 종료됐어요. 출석 여부를 확인해 주세요.\n출석 시 보증금 환불, 노쇼 시 보증금 차감됩니다.',
+        style: TextStyle(fontSize: 12, color: AppColors.primary, height: 1.5),
+      )),
+    ]),
+  );
 }
 
 class _SectionHeader extends StatelessWidget {
@@ -84,11 +118,14 @@ class _SectionHeader extends StatelessWidget {
 class _ApplicantCard extends ConsumerWidget {
   final Applicant applicant;
   final String roomId;
-  const _ApplicantCard({required this.applicant, required this.roomId});
+  final bool roomIsDone;
+  const _ApplicantCard({required this.applicant, required this.roomId, required this.roomIsDone});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isPending = applicant.status == 'pending';
+    final isAccepted = applicant.status == 'accepted';
+    final attendanceRecorded = applicant.attended != null;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -107,7 +144,10 @@ class _ApplicantCard extends ConsumerWidget {
             const SizedBox(height: 2),
             Text('@${applicant.handle}', style: const TextStyle(fontSize: 12, color: AppColors.sub)),
           ])),
-          _StatusBadge(status: applicant.status),
+          if (roomIsDone && isAccepted && attendanceRecorded)
+            _AttendanceBadge(attended: applicant.attended!)
+          else
+            _StatusBadge(status: applicant.status),
         ]),
 
         const SizedBox(height: 12),
@@ -133,6 +173,20 @@ class _ApplicantCard extends ConsumerWidget {
               onTap: () => _decide(context, ref, 'accept'),
             )),
           ]),
+        ] else if (roomIsDone && isAccepted && !attendanceRecorded) ...[
+          const Divider(height: 20, color: AppColors.line),
+          Row(children: [
+            Expanded(child: _OutlineBtn(
+              label: '노쇼',
+              color: AppColors.danger,
+              onTap: () => _markAttendance(context, ref, 0),
+            )),
+            const SizedBox(width: 10),
+            Expanded(child: _FilledBtn(
+              label: '출석',
+              onTap: () => _markAttendance(context, ref, 1),
+            )),
+          ]),
         ],
       ]),
     );
@@ -150,6 +204,41 @@ class _ApplicantCard extends ConsumerWidget {
         );
       }
     }
+  }
+
+  Future<void> _markAttendance(BuildContext context, WidgetRef ref, int attended) async {
+    final dio = ref.read(dioProvider);
+    try {
+      await dio.patch('/api/applications/${applicant.id}/attendance', data: {'attended': attended});
+      ref.invalidate(applicantsProvider(roomId));
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('오류: $e'), backgroundColor: AppColors.danger),
+        );
+      }
+    }
+  }
+}
+
+class _AttendanceBadge extends StatelessWidget {
+  final int attended;
+  const _AttendanceBadge({required this.attended});
+
+  @override
+  Widget build(BuildContext context) {
+    final (label, color) = attended == 1
+        ? ('출석', AppColors.success)
+        : ('노쇼', AppColors.danger);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: color.withOpacity(0.4)),
+      ),
+      child: Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: color)),
+    );
   }
 }
 

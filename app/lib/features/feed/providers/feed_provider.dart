@@ -3,7 +3,7 @@ import 'package:dio/dio.dart';
 import '../../../core/models/models.dart';
 import '../../../core/network/dio_client.dart';
 
-final dioProvider = Provider<Dio>((ref) => buildDio());
+final dioProvider = Provider<Dio>((ref) => buildDio(ref));
 
 final feedProvider = AsyncNotifierProvider<FeedNotifier, List<Reel>>(FeedNotifier.new);
 

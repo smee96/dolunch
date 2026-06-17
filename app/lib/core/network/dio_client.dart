@@ -1,10 +1,12 @@
 import 'package:dio/dio.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../constants/api.dart';
+import '../auth/auth_provider.dart';
 
-final _storage = const FlutterSecureStorage();
+const _storage = FlutterSecureStorage();
 
-Dio buildDio() {
+Dio buildDio(Ref ref) {
   final dio = Dio(BaseOptions(
     baseUrl: ApiConstants.baseUrl,
     connectTimeout: const Duration(seconds: 10),
@@ -22,8 +24,8 @@ Dio buildDio() {
     },
     onError: (error, handler) async {
       if (error.response?.statusCode == 401) {
-        await _storage.delete(key: 'auth_token');
-        // 로그인 화면으로 리다이렉트는 라우터에서 처리
+        // 토큰 만료 → AuthNotifier 통해 로그인 화면으로 이동
+        await ref.read(authNotifierProvider).onUnauthorized();
       }
       handler.next(error);
     },

@@ -172,6 +172,41 @@ applicationRoutes.patch('/applications/:id/decide', async (c) => {
   return c.json({ ok: true, status: decision })
 })
 
+// 출석 체크 (호스트가 모임 후 출석/노쇼 기록)
+applicationRoutes.patch('/applications/:id/attendance', async (c) => {
+  const userId = c.get('userId')
+  const appId = c.req.param('id')
+  const { attended } = await c.req.json<{ attended: 0 | 1 }>()
+  if (attended !== 0 && attended !== 1) return c.json({ error: 'Invalid attended value' }, 400)
+
+  const app = await c.env.DB.prepare(`
+    SELECT a.*, r.host_id, r.status as room_status, r.deposit_amount
+    FROM applications a JOIN rooms r ON a.room_id = r.id
+    WHERE a.id = ?
+  `).bind(appId).first<{
+    id: string; room_id: string; guest_id: string; status: string;
+    host_id: string; room_status: string; deposit_amount: number;
+    deposit_payment_key: string | null; attended: number | null;
+  }>()
+
+  if (!app) return c.json({ error: 'Not found' }, 404)
+  if (app.host_id !== userId) return c.json({ error: 'Forbidden' }, 403)
+  if (app.status !== 'accepted') return c.json({ error: 'Applicant not accepted' }, 400)
+  if (app.room_status !== 'done') return c.json({ error: 'Room not finished yet' }, 400)
+  if (app.attended !== null) return c.json({ error: 'Attendance already recorded' }, 400)
+
+  await c.env.DB.prepare(`UPDATE applications SET attended = ?, updated_at = datetime('now') WHERE id = ?`)
+    .bind(attended, appId).run()
+
+  // 노쇼: 보증금 환불 없음 (호스트에게 귀속)
+  // 출석: 보증금 환불
+  if (attended === 1 && app.deposit_payment_key) {
+    await refundDeposit(c.env, app.deposit_payment_key, appId)
+  }
+
+  return c.json({ ok: true, attended })
+})
+
 async function refundDeposit(env: AppContext['Bindings'], paymentKey: string, appId: string) {
   await fetch(`${env.TOSS_API_URL}/v1/payments/${paymentKey}/cancel`, {
     method: 'POST',
