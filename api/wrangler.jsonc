@@ -6,6 +6,8 @@
   "observability": {
     "enabled": true
   },
+
+  // ── Production ──────────────────────────────────────────────────────────────
   "d1_databases": [
     {
       "binding": "DB",
@@ -31,5 +33,38 @@
     "DEPOSIT_RATIO": "0.20",
     "PLATFORM_FEE_RATIO": "0.30",
     "WITHHOLDING_TAX_RATE": "0.033"
+  },
+
+  // ── Dev environment: npx wrangler dev --env dev ──────────────────────────
+  "env": {
+    "dev": {
+      "name": "dolunch-api-dev",
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "dolunch-db-dev",
+          "database_id": "7a1865dc-2478-4eb4-b188-7e729814f974"
+        }
+      ],
+      "r2_buckets": [
+        {
+          "binding": "MEDIA",
+          "bucket_name": "dolunch-media"
+        }
+      ],
+      "kv_namespaces": [
+        {
+          "binding": "SESSION",
+          "id": "8d9c09c66be94857ba96d85bd6651ad3"
+        }
+      ],
+      "vars": {
+        "ENVIRONMENT": "development",
+        "TOSS_API_URL": "https://api.tosspayments.com",
+        "DEPOSIT_RATIO": "0.20",
+        "PLATFORM_FEE_RATIO": "0.30",
+        "WITHHOLDING_TAX_RATE": "0.033"
+      }
+    }
   }
 }

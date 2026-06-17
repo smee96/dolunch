@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
 import '../constants/api.dart';
 import '../auth/auth_provider.dart';
 
@@ -24,8 +25,13 @@ Dio buildDio(Ref ref) {
     },
     onError: (error, handler) async {
       if (error.response?.statusCode == 401) {
-        // 토큰 만료 → AuthNotifier 통해 로그인 화면으로 이동
         await ref.read(authNotifierProvider).onUnauthorized();
+      } else if (error.response?.statusCode != null &&
+          error.response!.statusCode! >= 500) {
+        // 5xx 오류는 Sentry에 리포트
+        await Sentry.captureException(error,
+            stackTrace: error.stackTrace,
+            hint: Hint.withMap({'url': error.requestOptions.path}));
       }
       handler.next(error);
     },

@@ -1,6 +1,7 @@
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { logger } from 'hono/logger'
+import * as Sentry from '@sentry/cloudflare'
 import { authRoutes } from './routes/auth'
 import { reelRoutes } from './routes/reels'
 import { roomRoutes } from './routes/rooms'
@@ -27,6 +28,7 @@ export type Env = {
   PLATFORM_FEE_RATIO: string
   WITHHOLDING_TAX_RATE: string
   ENVIRONMENT: string
+  SENTRY_DSN?: string
 }
 
 export type AppContext = {
@@ -79,4 +81,17 @@ admin.use('*', adminMiddleware)
 admin.route('/', adminRoutes)
 app.route('/admin', admin)
 
-export default app
+// Sentry 에러 캡처 래퍼
+export default {
+  fetch(request: Request, env: AppContext['Bindings'], ctx: ExecutionContext) {
+    if (!env.SENTRY_DSN) return app.fetch(request, env, ctx)
+    return Sentry.withSentry(
+      () => ({
+        dsn: env.SENTRY_DSN!,
+        environment: env.ENVIRONMENT,
+        tracesSampleRate: env.ENVIRONMENT === 'production' ? 0.2 : 1.0,
+      }),
+      app,
+    ).fetch(request, env, ctx)
+  },
+}

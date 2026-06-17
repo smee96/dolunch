@@ -1,15 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
 import 'core/theme/app_theme.dart';
 import 'core/router/app_router.dart';
 import 'core/auth/auth_provider.dart';
+import 'core/config/app_config.dart';
 import 'features/onboarding/screens/onboarding_screen.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
-  runApp(const ProviderScope(child: DolunchApp()));
+  await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+
+  if (AppConfig.sentryDsn.isNotEmpty) {
+    await SentryFlutter.init(
+      (options) {
+        options.dsn = AppConfig.sentryDsn;
+        options.environment = AppConfig.env;
+        options.tracesSampleRate = AppConfig.isProd ? 0.2 : 1.0;
+        options.debug = AppConfig.isDev;
+      },
+      appRunner: () => runApp(const ProviderScope(child: DolunchApp())),
+    );
+  } else {
+    runApp(const ProviderScope(child: DolunchApp()));
+  }
 }
 
 class DolunchApp extends ConsumerWidget {

@@ -1,10 +1,8 @@
-class ApiConstants {
-  static const baseUrl = String.fromEnvironment(
-    'API_BASE_URL',
-    defaultValue: 'http://localhost:8787',
-  );
+import '../config/app_config.dart';
 
-  // 정산 비율 (서버와 동일하게 유지)
+class ApiConstants {
+  static String get baseUrl => AppConfig.apiBaseUrl;
+
   static const depositRatio = 0.20;
   static const platformFeeRatio = 0.30;
   static const withholdingTaxRate = 0.033;
