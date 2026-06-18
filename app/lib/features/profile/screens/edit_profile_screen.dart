@@ -139,9 +139,55 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
   bool get _picking => _uploading;
 
+  Future<ImageSource?> _showSourcePicker() {
+    return showModalBottomSheet<ImageSource>(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => SafeArea(
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          Container(
+            width: 36, height: 4, margin: const EdgeInsets.symmetric(vertical: 14),
+            decoration: BoxDecoration(color: const Color(0xFFE0E0E0), borderRadius: BorderRadius.circular(2)),
+          ),
+          const Text('프로필 사진 변경', style: TextStyle(
+            fontSize: 16, fontWeight: FontWeight.w800, color: AppColors.ink,
+          )),
+          const SizedBox(height: 8),
+          ListTile(
+            leading: Container(
+              width: 40, height: 40,
+              decoration: const BoxDecoration(shape: BoxShape.circle, gradient: AppColors.glamGradient),
+              child: const Icon(Icons.camera_alt_outlined, color: Colors.white, size: 20),
+            ),
+            title: const Text('카메라로 촬영', style: TextStyle(fontWeight: FontWeight.w700, color: AppColors.ink)),
+            subtitle: const Text('지금 바로 찍기', style: TextStyle(fontSize: 12, color: AppColors.sub)),
+            onTap: () => Navigator.pop(context, ImageSource.camera),
+          ),
+          ListTile(
+            leading: Container(
+              width: 40, height: 40,
+              decoration: BoxDecoration(shape: BoxShape.circle, color: AppColors.line, borderRadius: BorderRadius.circular(20)),
+              child: const Icon(Icons.photo_library_outlined, color: AppColors.ink, size: 20),
+            ),
+            title: const Text('갤러리에서 선택', style: TextStyle(fontWeight: FontWeight.w700, color: AppColors.ink)),
+            subtitle: const Text('내 앨범에서 고르기', style: TextStyle(fontSize: 12, color: AppColors.sub)),
+            onTap: () => Navigator.pop(context, ImageSource.gallery),
+          ),
+          const SizedBox(height: 12),
+        ]),
+      ),
+    );
+  }
+
   Future<void> _pickAvatar() async {
+    final source = await _showSourcePicker();
+    if (source == null) return;
+
     final picker = ImagePicker();
-    final xf = await picker.pickImage(source: ImageSource.gallery, imageQuality: 80, maxWidth: 800);
+    final xf = await picker.pickImage(source: source, imageQuality: 80, maxWidth: 800);
     if (xf == null) return;
 
     final file = File(xf.path);

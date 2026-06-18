@@ -32,9 +32,12 @@ class _UploadReelScreenState extends ConsumerState<UploadReelScreen> {
     super.dispose();
   }
 
-  Future<void> _pickVideo() async {
+  Future<void> _pickVideo({ImageSource source = ImageSource.gallery}) async {
     final picker = ImagePicker();
-    final xfile = await picker.pickVideo(source: ImageSource.gallery, maxDuration: const Duration(seconds: 15));
+    final xfile = await picker.pickVideo(
+      source: source,
+      maxDuration: const Duration(seconds: 15),
+    );
     if (xfile == null) return;
 
     final file = File(xfile.path);
@@ -144,7 +147,7 @@ class _UploadReelScreenState extends ConsumerState<UploadReelScreen> {
                       ]),
                     ),
                   )
-                : _VideoPreview(controller: _controller!, onRetake: _pickVideo),
+                : _VideoPreview(controller: _controller!, onRetake: _picking),
           ),
 
           // 캡션 + 모임 선택
@@ -225,7 +228,49 @@ class _UploadReelScreenState extends ConsumerState<UploadReelScreen> {
   }
 
   Future<void> _picking() async {
-    await _pickVideo();
+    final source = await _showSourcePicker(context);
+    if (source != null) await _pickVideo(source: source);
+  }
+
+  Future<ImageSource?> _showSourcePicker(BuildContext context) {
+    return showModalBottomSheet<ImageSource>(
+      context: context,
+      backgroundColor: const Color(0xFF1A0C14),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => SafeArea(
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          Container(
+            width: 36, height: 4, margin: const EdgeInsets.symmetric(vertical: 14),
+            decoration: BoxDecoration(color: const Color(0xFF3A2030), borderRadius: BorderRadius.circular(2)),
+          ),
+          const Text('영상 선택', style: TextStyle(
+            fontSize: 16, fontWeight: FontWeight.w800, color: Colors.white,
+          )),
+          const SizedBox(height: 20),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Row(children: [
+              Expanded(child: _SourceBtn(
+                icon: Icons.videocam_outlined,
+                label: '카메라로 촬영',
+                sub: '최대 15초',
+                onTap: () => Navigator.pop(context, ImageSource.camera),
+              )),
+              const SizedBox(width: 12),
+              Expanded(child: _SourceBtn(
+                icon: Icons.photo_library_outlined,
+                label: '갤러리에서 선택',
+                sub: '내 앨범',
+                onTap: () => Navigator.pop(context, ImageSource.gallery),
+              )),
+            ]),
+          ),
+          const SizedBox(height: 24),
+        ]),
+      ),
+    );
   }
 }
 
@@ -326,6 +371,38 @@ class _RoomChip extends StatelessWidget {
         fontSize: 13, fontWeight: FontWeight.w700,
         color: selected ? Colors.white : AppColors.sub,
       ), maxLines: 1, overflow: TextOverflow.ellipsis),
+    ),
+  );
+}
+
+class _SourceBtn extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String sub;
+  final VoidCallback onTap;
+  const _SourceBtn({required this.icon, required this.label, required this.sub, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) => GestureDetector(
+    onTap: onTap,
+    child: Container(
+      padding: const EdgeInsets.symmetric(vertical: 20),
+      decoration: BoxDecoration(
+        color: const Color(0xFF2A1020),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFF3A2030)),
+      ),
+      child: Column(mainAxisSize: MainAxisSize.min, children: [
+        Container(
+          width: 52, height: 52,
+          decoration: const BoxDecoration(shape: BoxShape.circle, gradient: AppColors.glamGradient),
+          child: Icon(icon, color: Colors.white, size: 24),
+        ),
+        const SizedBox(height: 10),
+        Text(label, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: Colors.white)),
+        const SizedBox(height: 4),
+        Text(sub, style: const TextStyle(fontSize: 11, color: AppColors.sub)),
+      ]),
     ),
   );
 }
