@@ -93,11 +93,11 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
                 // 탭
                 Expanded(
                   child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                    _TabBtn(label: '팔로잉', active: _tab == 'following',
-                      onTap: () { setState(() => _tab = 'following'); ref.read(feedProvider.notifier).switchType('following'); }),
-                    const SizedBox(width: 22),
                     _TabBtn(label: '둘러보기', active: _tab == 'explore',
                       onTap: () { setState(() => _tab = 'explore'); ref.read(feedProvider.notifier).switchType('explore'); }),
+                    const SizedBox(width: 22),
+                    _TabBtn(label: '팔로잉', active: _tab == 'following',
+                      onTap: () { setState(() => _tab = 'following'); ref.read(feedProvider.notifier).switchType('following'); }),
                   ]),
                 ),
                 const SizedBox(width: 36), // 균형
