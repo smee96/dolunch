@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'core/theme/app_theme.dart';
 import 'core/router/app_router.dart';
 import 'core/auth/auth_provider.dart';
@@ -10,6 +11,7 @@ import 'features/onboarding/screens/onboarding_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await initializeDateFormatting('ko_KR');
   await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
 
   if (AppConfig.sentryDsn.isNotEmpty) {
