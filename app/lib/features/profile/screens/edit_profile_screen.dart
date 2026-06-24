@@ -169,7 +169,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           ListTile(
             leading: Container(
               width: 40, height: 40,
-              decoration: BoxDecoration(shape: BoxShape.circle, color: AppColors.line, borderRadius: BorderRadius.circular(20)),
+              decoration: const BoxDecoration(shape: BoxShape.circle, color: AppColors.line),
               child: const Icon(Icons.photo_library_outlined, color: AppColors.ink, size: 20),
             ),
             title: const Text('갤러리에서 선택', style: TextStyle(fontWeight: FontWeight.w700, color: AppColors.ink)),
