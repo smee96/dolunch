@@ -62,11 +62,37 @@ dev_dependencies:
   json_serializable: ^6.9.5
   json_annotation: ^4.9.0
 
+  # 앱 아이콘 / 스플래시 생성기
+  flutter_launcher_icons: ^0.14.1
+  flutter_native_splash: ^2.4.4
+
+# 앱 아이콘 (글램 그라데이션 + 포크/나이프)
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/branding/app_icon.png"
+  min_sdk_android: 21
+  adaptive_icon_background: "assets/branding/icon_bg.png"
+  adaptive_icon_foreground: "assets/branding/icon_fg.png"
+  remove_alpha_ios: true
+
+# 네이티브 스플래시 (콜드스타트 즉시 표시되는 그라데이션 + 로고)
+flutter_native_splash:
+  color: "#F0457E"
+  background_image: "assets/branding/splash_bg.png"
+  image: "assets/branding/splash_logo.png"
+  android_12:
+    image: "assets/branding/splash_logo.png"
+    color: "#F0457E"
+  android: true
+  ios: true
+
 flutter:
   uses-material-design: true
   assets:
     - assets/fonts/
     - assets/images/
+    - assets/branding/
   fonts:
     - family: Pretendard
       fonts:

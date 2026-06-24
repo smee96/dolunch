@@ -8,6 +8,7 @@ import 'core/router/app_router.dart';
 import 'core/auth/auth_provider.dart';
 import 'core/config/app_config.dart';
 import 'features/onboarding/screens/onboarding_screen.dart';
+import 'features/splash/screens/splash_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -41,7 +42,7 @@ class DolunchApp extends ConsumerWidget {
       builder: (_, snapshot) {
         if (snapshot.connectionState != ConnectionState.done) {
           return const MaterialApp(
-            home: Scaffold(body: Center(child: CircularProgressIndicator())),
+            home: SplashScreen(),
             debugShowCheckedModeBanner: false,
           );
         }
@@ -58,7 +59,7 @@ class _AppWithOnboarding extends ConsumerWidget {
 
     return onboardingAsync.when(
       loading: () => const MaterialApp(
-        home: Scaffold(body: Center(child: CircularProgressIndicator())),
+        home: SplashScreen(),
         debugShowCheckedModeBanner: false,
       ),
       error: (_, __) => _RouterApp(),
