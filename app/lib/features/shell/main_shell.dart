@@ -53,10 +53,13 @@ class _BottomNav extends StatelessWidget {
     final bgColor = isDark
         ? Colors.black.withOpacity(0.55)
         : Colors.white.withOpacity(0.92);
+    // 시스템 내비게이션(제스처/3버튼) 영역만큼 하단 여백을 둬 아이콘이 잘리지 않게 함
+    final bottomInset = MediaQuery.of(context).viewPadding.bottom;
 
     return ClipRect(
       child: Container(
-        height: 86,
+        height: 86 + bottomInset,
+        padding: EdgeInsets.only(bottom: bottomInset),
         decoration: BoxDecoration(
           color: bgColor,
           border: Border(top: BorderSide(color: Colors.white.withOpacity(0.1), width: 0.5)),
