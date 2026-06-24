@@ -9,6 +9,7 @@ mediaRoutes.post('/presign', async (c) => {
   const userId = c.get('userId')
   const { type, ext } = await c.req.json<{ type: 'reel' | 'receipt' | 'avatar'; ext: string }>()
 
+  if (!type || !ext) return c.json({ error: 'type, ext required' }, 400)
   const allowed = ['mp4', 'mov', 'jpg', 'jpeg', 'png', 'webp', 'heic', 'pdf']
   if (!allowed.includes(ext.toLowerCase())) return c.json({ error: 'Unsupported file type' }, 400)
 
@@ -29,12 +30,14 @@ mediaRoutes.post('/presign', async (c) => {
     fields: { 'Content-Length': String(MAX_SIZE[type] ?? 10 * 1024 * 1024) },
   })
 
+  const publicUrl = `https://media.dolunch.app/${key}`
+
   // createPresignedUrl이 없는 환경(로컬)에선 직접 업로드 엔드포인트 사용
   if (!url) {
-    return c.json({ uploadUrl: `/api/media/upload/${key}`, key, method: 'PUT' })
+    return c.json({ uploadUrl: `/api/media/upload/${key}`, key, method: 'PUT', publicUrl })
   }
 
-  return c.json({ uploadUrl: url, key })
+  return c.json({ uploadUrl: url, key, publicUrl })
 })
 
 // 로컬/fallback 직접 업로드

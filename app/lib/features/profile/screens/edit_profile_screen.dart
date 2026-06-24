@@ -197,25 +197,33 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       final dio = ref.read(dioProvider);
       final ext = xf.path.split('.').last.toLowerCase();
       final mimeType = ext == 'png' ? 'image/png' : 'image/jpeg';
-
-      // Presign
-      final presignRes = await dio.post<Map<String, dynamic>>('/api/media/presign', data: {
-        'fileName': 'avatar_${DateTime.now().millisecondsSinceEpoch}.$ext',
-        'contentType': mimeType,
-      });
-      final uploadUrl = presignRes.data!['uploadUrl'] as String;
-      final publicUrl = presignRes.data!['publicUrl'] as String;
-
-      // Upload to R2
       final bytes = await file.readAsBytes();
-      await Dio().put(uploadUrl,
-        data: Stream.fromIterable([bytes]),
-        options: Options(headers: {
-          'Content-Type': mimeType,
-          'Content-Length': bytes.length,
-        }),
-      );
 
+      // Presign (백엔드 계약: { type, ext } → { uploadUrl, key, publicUrl? })
+      final presignRes = await dio.post<Map<String, dynamic>>('/api/media/presign', data: {
+        'type': 'avatar',
+        'ext': ext,
+      });
+      final data = presignRes.data!;
+      final uploadUrl = data['uploadUrl'] as String;
+      final key = data['key'] as String?;
+      String? publicUrl = data['publicUrl'] as String?;
+
+      if (uploadUrl.startsWith('http')) {
+        // R2 presigned 절대 URL → 인증 없는 순수 PUT
+        await Dio().put(uploadUrl, data: bytes,
+          options: Options(headers: {Headers.contentTypeHeader: mimeType}));
+        publicUrl ??= (key != null) ? 'https://media.dolunch.app/$key' : null;
+      } else {
+        // 로컬/fallback 상대 경로 → 인증된 dio로 업로드, 응답의 url 사용
+        final upRes = await dio.put<Map<String, dynamic>>(uploadUrl, data: bytes,
+          options: Options(headers: {Headers.contentTypeHeader: mimeType}));
+        publicUrl = (upRes.data?['url'] as String?) ?? publicUrl;
+      }
+
+      if (publicUrl == null) {
+        throw Exception('업로드 응답에 URL이 없습니다');
+      }
       setState(() { _newAvatarUrl = publicUrl; _uploading = false; });
     } catch (e) {
       setState(() => _uploading = false);
