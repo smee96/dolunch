@@ -49,6 +49,12 @@ class _ReelSlideState extends State<ReelSlide> {
 
   @override
   Widget build(BuildContext context) {
+    // 기기 인셋(상단 카메라 노치/상태바, 하단 제스처·내비 바)을 반영해
+    // 하드코딩 위치가 시스템 UI에 가리지 않도록 함
+    final pad = MediaQuery.of(context).viewPadding;
+    // 기존 하드코딩 값은 고정 하단 네비(86)만 가정 → 제스처 내비 인셋만큼 더 올림
+    final bottomInset = pad.bottom;
+
     return GestureDetector(
       onTap: () {
         if (_ctrl == null) return;
@@ -76,9 +82,9 @@ class _ReelSlideState extends State<ReelSlide> {
             colors: [Color(0xD00A0407), Colors.transparent],
           ))),
 
-          // HOST REEL 라벨
-          const Positioned(top: 64, left: 20,
-            child: Text('HOST REEL', style: TextStyle(
+          // HOST REEL 라벨 (상단 카메라 노치/상태바 아래로)
+          Positioned(top: pad.top + 16, left: 20,
+            child: const Text('HOST REEL', style: TextStyle(
               fontFamily: 'monospace', fontSize: 11, letterSpacing: 3,
               color: Color(0xB3FFFFFF), fontWeight: FontWeight.w600,
             )),
@@ -86,7 +92,7 @@ class _ReelSlideState extends State<ReelSlide> {
 
           // 우측 레일
           Positioned(
-            right: 14, bottom: 188,
+            right: 14, bottom: 188 + bottomInset,
             child: Column(children: [
               // 호스트 아바타
               Stack(children: [
@@ -123,7 +129,7 @@ class _ReelSlideState extends State<ReelSlide> {
 
           // 하단 콘텐츠
           Positioned(
-            left: 18, right: 84, bottom: 104,
+            left: 18, right: 84, bottom: 104 + bottomInset,
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Row(children: [
                 Text(widget.reel.hostHandle, style: const TextStyle(
