@@ -23,8 +23,13 @@ api/dist/
 # Secrets
 .env
 .env.local
+.env.production
+.env.*.local
 *.secret
 wrangler.secrets.toml
+
+# Cloudflare / build artifacts
+.wrangler/
 
 # OS
 .DS_Store
